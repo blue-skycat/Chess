@@ -1,17 +1,14 @@
 <template>
   <div id="app">
-    <landing-page></landing-page>
+    display:
+    <router-link to="/try1">try1</router-link>
+    <router-link to="/try2">try2</router-link>
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-  import LandingPage from '@/components/LandingPage'
-
   export default {
-    name: 'chessclient',
-    components: {
-      LandingPage
-    }
   }
 </script>
 

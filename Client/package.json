@@ -56,7 +56,8 @@
     }
   },
   "dependencies": {
-    "vue": "^2.5.16"
+    "vue": "^2.5.16",
+    "vue-router": "^3.0.2"
   },
   "devDependencies": {
     "ajv": "^6.5.0",
