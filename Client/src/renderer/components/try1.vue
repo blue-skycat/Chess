@@ -10,7 +10,6 @@
       return {}
     },
     mounted () {
-
     }
   }
 </script>
