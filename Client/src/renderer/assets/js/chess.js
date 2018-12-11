@@ -8,14 +8,14 @@
  * @param : SWidth 单个格子的长度
 */
 function chessboardInit ({
-                           elem, 
-                           SWidth=70, 
+                           elem,
+                           SWidth=70,
                            LWidth=4,
-                           LHWidth = Math.round(LWidth/2), 
+                           LHWidth = Math.round(LWidth/2),
                            width = SWidth*8,
                            height = SWidth*9,
                          }) {
-  let object = {
+  const chessboard = {
     init(){
       elem.width = width + LWidth;
       elem.height = height + LWidth;
@@ -128,6 +128,54 @@ function chessboardInit ({
       this.drawLine(5 * SWidth + LWidth, 7 * SWidth, 3 * SWidth + LHWidth, 9 * SWidth + LHWidth);
     }
   };
-  object.init();
+  chessboard.init();
 }
-export { chessboardInit }
+
+/**
+ * @author NZQ
+ * @date 2018/12/11
+ * @Description : 主要的程序
+ * @Param :
+*/
+function chess () {
+  const map = [
+    ["bche", "bma", "bxiang", "bshi", "bjiang", "b"]
+  ]
+
+  // 棋子相关的操作
+  class Piece {
+    constructor ({
+                   belong = "",
+                   moveRule,
+                   delRule,
+                 }) {
+      this.belong = belong; // 归属方
+      this.moveRule = moveRule; // 棋子的移动规则
+      this.delRule = delRule;// 棋子吃掉对方棋子的规则
+    }
+    canMove() { // 是否可以移动到指定的位置
+    }
+    canDel() {
+
+    }
+  }
+
+  let try1 = new Piece({
+    belong: "red",
+    moveRule: ([curPo = {x:0, y:0}, tagPo = {x:0, y:0}]) => {
+      console.log(curPo.x, curPo.y, tagPo.x, tagPo.y)
+    },
+    delRule: (cur, tag) => {
+      return true
+    }
+  })
+
+  try1.moveRule([{
+    x: 100,
+    y: 10,
+  },{
+    x: 1000,
+    y: 12
+  }])
+}
+export { chessboardInit, chess }
