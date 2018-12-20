@@ -7,7 +7,7 @@
 </template>
 
 <script>
-    import { chessboardInit, chess } from '../assets/js/chess'
+    import chess from '../assets/js/chess'
 
     export default {
     name: 'try1',
@@ -20,12 +20,11 @@
     },
     mounted () {
       let that = this;
-      chessboardInit({
+      chess({
         elem: that.$refs.canvas,
         SWidth: 70,
-        LWidth: 6,
-      })
-      chess();
+        LWidth: 4,
+      });
     }
   }
 </script>
@@ -59,6 +58,7 @@
         }
         #chessWrap {
             width: fit-content;
+
             canvas {
                 background: url("../assets/img/chessBk.jpg") repeat ;
             }
