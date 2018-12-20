@@ -10,5 +10,5 @@
 </script>
 
 <style>
-  /* CSS */
+  @import "./assets/less/base.less";
 </style>
