@@ -1,15 +1,15 @@
 import Vue from 'vue'
-
 import App from './App'
 import router from './router/index'
-import socket from './socket'
+import { socket } from './socket'
+
 
 Vue.config.productionTip = false
-socket.init()
+Vue.prototype.$socket =  socket;
 
 /* eslint-disable no-new */
 new Vue({
-  components: { App },
+  el: "#app",
   router,
-  template: '<App/>'
-}).$mount('#app')
+  render: h => h(App)
+})

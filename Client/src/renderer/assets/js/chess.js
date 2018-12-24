@@ -28,7 +28,13 @@ function chess ({
 
   // 对应棋盘坐标
   // const map = new Array(9).fill(new Array(10));
-  const map = [[],[],[],[],[],[],[],[],[]]
+  const map = [[],[],[],[],[],[],[],[],[]];
+  // socket传输的数据
+  const sokTransData = {
+    prePo: {x: 10, y: 10}, // 记录对应棋子在对方走之前的坐标
+    curPo: {x: 10, y: 10}, // 记录对应棋子在对方走之后的坐标
+    winSide: "",           // 记录赢的一方
+  }
 
   /**
    * @author NZQ
@@ -186,16 +192,15 @@ function chess ({
     },
 
     // 棋盘上面的点击事件处理函数
-    boardClickHandle() {
-      refs.chessWrap.onclick = (event) => {
+    clickHandle() {
+      refs.chess.onclick = (event) => {
         let tag = event.target
           ,tagName = tag.tagName.toUpperCase();
 
         if (tagName === 'DIV' && tag.classList.contains("piece")) { // 点击棋子时，选中当前棋子（事件委托）
 
-        }
-        else if (tagName === "CANVAS") {  // 点击棋盘时，检测在棋盘上面的点击是否点击的交叉处
-
+        } else {
+          console.log(event)
         }
       }
 
@@ -543,6 +548,7 @@ function chess ({
   }
 
   chessboard.init();
+  chessboard.clickHandle();
   initAllPiece();
 }
 
