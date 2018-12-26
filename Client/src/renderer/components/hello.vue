@@ -25,6 +25,7 @@
       login(){
         if (this.userName) {
           this.$socket.userName = this.userName;
+          sessionStorage.userName = this.userName;
           this.$socket.userJoin().then((bool) => {
             if (!bool) {
               this.hideTip = bool;
@@ -50,7 +51,6 @@
 
 <style scoped lang="less">
     .hello {
-        background-color:  #304059;
         height: 100%;
 
         .join-wrap {

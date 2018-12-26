@@ -65,7 +65,7 @@ function chess ({
     // 判断数学坐标是否在列范围
     inRange(curX, nextX, curY, nextY) {
       return this.inRowRange(curX, nextX) && this.inColRange(curY, nextY)
-    }
+    },
   }
 
   /**
@@ -198,7 +198,7 @@ function chess ({
           ,tagName = tag.tagName.toUpperCase();
 
         if (tagName === 'DIV' && tag.classList.contains("piece")) { // 点击棋子时，选中当前棋子（事件委托）
-
+          console.log(event)
         } else {
           console.log(event)
         }
@@ -219,7 +219,10 @@ function chess ({
                    type,
                    belong,
                    moveRule,
-                   delRule,
+                   delRule = () => {
+                     let [x, y] = nextPo;
+                     return map[x][y].belong !== belong && moveRule();
+                   },
                  }) {
       this.type = type;
       // 归属方
@@ -288,14 +291,11 @@ function chess ({
                        let {curX, curY} = this.po
                          ,{nextX, nextY} = this.nextPo;
                        if ((Math.abs(curX -nextX) === 1 && curY === nextY) || (curX === nextX && Math.abs(curY -nextY) === 1)) {
-                         return nextX>=3 && nextX<=5 && nextY>=7 && nextY<=9;     //return this.belong === "red" && (nextX>=3 && nextX<=5) ? (nextY>=7 && nextY<=9) : (nextY>=0 && nextY<=2);
+                         return nextX>=3 && nextX<=5 && nextY>=7 && nextY<=9;
                        }
-                     },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
+                     }
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,});
+        super({po, nextPo, type, belong, moveRule,});
       }
     },
     Shi: class extends Piece {
@@ -308,14 +308,11 @@ function chess ({
                        let {curX, curY} = this.po
                          ,{nextX, nextY} = this.nextPo;
                        if (Math.abs(curX -nextX) === 1 && Math.abs(curY -nextY) === 1) {
-                         return nextX>=3 && nextX<=5 && nextY>=7 && nextY<=9; // return this.belong === "red" && (nextX>=3 && nextX<=5) ? (nextY>=7 && nextY<=9) : (nextY>=0 && nextY<=2);
+                         return nextX>=3 && nextX<=5 && nextY>=7 && nextY<=9;
                        }
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,});
+        super({po, nextPo, type, belong, moveRule,});
       }
     },
     Xiang: class extends Piece {
@@ -331,11 +328,8 @@ function chess ({
                          return util.inRowRange(curX, nextX) && util.inDownColRange(curY, nextY);
                        }
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,});
+        super({po, nextPo, type, belong, moveRule,});
       }
     },
     Che: class extends Piece {
@@ -371,11 +365,8 @@ function chess ({
                          }
                        }
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,});
+        super({po, nextPo, type, belong, moveRule,});
       }
     },
     Pao: class extends Piece {
@@ -384,26 +375,34 @@ function chess ({
                      nextPo,
                      type = "pao",
                      belong,
-                     moveRule = () => {
+                     commonRule = () => {
                        let {curX, curY} = this.po
-                         ,{nextX, nextY} = this.nextPo;
+                         ,{nextX, nextY} = this.nextPo
+                         ,markX = 0 // 判断在x方向上中间的棋子数
+                         ,markY = 0; // 判断在y方向上中间的棋子数
                        if (util.inRange(curX, nextX, curY, nextY) && !map[nextX][nextY]) {
-                         let [min, max] = [Math.min(curY, nextY), Math.max(curY, nextY)],mark = true;
+                         let [min, max] = [Math.min(curY, nextY), Math.max(curY, nextY)];
                          if (curY === nextY && curX !== nextX) {
                            for (let i = min + 1; i < max; i++) {
-                             if (!!map[i][nextY]) {return false}
+                             if (!!map[i][nextY]) {markY++}
                            }
-                           return mark;
                          } else if (curX === nextX && curY !== nextY) {
                            for (let i = min + 1; i < max; i++) {
-                             if (!!map[nextX][i]) {return false}
+                             if (!!map[nextX][i]) {markX++}
                            }
-                           return mark;
                          }
                        }
+
+                       return [markX, markY];
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
+                     moveRule = () => {
+                       let arr = commonRule();
+                       return arr[0]===0 && arr[1]===0
+                     },
+                     delRule = () => {
+                       let arr = commonRule()
+                         ,[x, y] = nextPo;
+                       return map[x][y].belong !== belong && arr[0]===1 || arr[1]===1;
                      },
                    }){
         super({po, nextPo, type, belong, moveRule, delRule,});
@@ -423,14 +422,11 @@ function chess ({
                            return !map[(nextX + curX)/2][nextY];
                          } else if (Math.abs(curY - nextY) === 2 && Math.abs(curX - nextX) === 1) {
                            return !map[(nextY + curY)/2][nextX];
-                         } 
+                         }
                        }
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,})
+        super({po, nextPo, type, belong, moveRule,})
       }
     },
     Bing: class extends Piece {
@@ -450,11 +446,8 @@ function chess ({
                          }
                        }
                      },
-                     delRule = (pieceObj) => {
-                       return !!pieceObj
-                     },
                    }){
-        super({po, nextPo, type, belong, moveRule, delRule,})
+        super({po, nextPo, type, belong, moveRule,})
       }
     }
   }
