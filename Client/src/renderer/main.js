@@ -9,14 +9,9 @@ Vue.config.productionTip = true;
 Vue.prototype.$socket =  socket;
 Vue.use(elementUi);
 
-/*router.beforeEach((to, from, next) => {
-  if (to.path === '/hello') {
-    sessionStorage.removeItem("userName");
-  } else if (sessionStorage.userName) {
-    next({path: '/hello'})
-  }
-  next()
-})*/
+// router.afterEach((to, from) => {
+//   console.log(to);
+// })
 
 /* eslint-disable no-new */
 new Vue({

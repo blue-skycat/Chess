@@ -22,9 +22,12 @@ function chess ({
 
   // 格子和相关涉及的一下相关的长度
   const LHWidth = Math.round(LWidth/2)
-    ,PWidth = Math.round(SWidth*5/7)
+    ,PWidth = Math.round(SWidth*6/7)
     ,PHWidth = Math.round(PWidth/2)
     ,refs = vue.$refs;
+
+  const socket = vue.$socket;
+  const socketData = vue.socketData;
 
   // 对应棋盘坐标
   // const map = new Array(9).fill(new Array(10));
@@ -451,6 +454,7 @@ function chess ({
       }
     }
   }
+
 
   /**
    * @author NZQ

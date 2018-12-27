@@ -12,7 +12,7 @@ export default new Router({
   routes: [
     {
       path: '/',
-      redirect: '/hello'
+      redirect: '/hello',
     },
     {
       path: '/hello',

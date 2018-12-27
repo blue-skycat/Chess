@@ -4,6 +4,7 @@ const socketIo = io.connect("http://localhost:3000");
 
 const socket = {
   userName: "",
+  inviteData: null, // 邀请他人的传输对象{inviter, to}
 
   // 触发用户加入事件
   userJoin() {
@@ -32,7 +33,7 @@ const socket = {
 
   // 监听服务器端用户Map改变事件
   listenUserArrChange(cb) {
-    socketIo.on("userMapChange", (userArr) => {
+    socketIo.on("userListChange", (userArr) => {
       console.log(userArr);
       cb(userArr)
     })
@@ -45,34 +46,50 @@ const socket = {
   },
 
   // 监听是否被某人邀请的事件
-  invited(userName, cb) {
-    socketIo.on("invite"+userName, (inviteData) => {
-      console.log("监听是否被某人邀请的事件")
+  listenInvite(cb) {
+    console.log("监听是否被某人邀请的事件")
+    socketIo.on("listenInvite", (inviteData) => {
+
       cb(inviteData)
     })
   },
 
   // 触发返回邀请结果的事件
-  backInvite(invitedData) {
+  backInvite(inviteData) {
     console.log("触发返回邀请结果的事件");
-    socketIo.emit("backInvite", invitedData)
+    socketIo.emit("backInvite", inviteData)
   },
 
   // 监听获取邀请结果事件
-  getInvite(userName, cb) {
+  listenInviteRel(cb) {
     //////////////////////////////////////////////////////////// 这个回调函数被多次执行
     //////////////////////////////////////////////////////////// 这个回调函数被多次执行
     //////////////////////////////////////////////////////////// 这个回调函数被多次执行
-    //////////////////////////////////////////////////////////// 这个回调函数被多次执行
-    //////////////////////////////////////////////////////////// 这个回调函数被多次执行
-    //////////////////////////////////////////////////////////// 这个回调函数被多次执行
-    socketIo.on("getInvite"+userName, nzq)
-    function nzq ( bool) {
-      console.log("接收到邀请确认结果")
-      cb(bool)
-    }
+    socketIo.on("listenInviteRel", (inviteData) => {
+        console.log("接收到邀请确认结果")
+        cb(inviteData)
+    })
   },
 
+
+  // 加入房间事件
+  joinRoom(room) {
+    socketIo.emit("joinRoom", room)
+  },
+
+  // 监听他人键入
+  listenJoinRoom(cb) {
+    socketIo.on("listenJoinRoom", (userName) => {
+      cb(userName)
+    })
+  },
+
+  // 系统随机选取当前用户属于哪一方（红/黑）
+  listenMakeBelong(cb) {
+    socketIo.on("makeBelong", (obj) => {
+      cb(obj)
+    })
+  }
 }
 
 export { socket }

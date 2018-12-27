@@ -1,12 +1,15 @@
 <template>
     <div class="chess-body">
+        <h1>{{room.name}}</h1>
         <div class="main">
-            <div class="competitor1">{{competitor1}}(黑方)</div>
-            <div class="competitor2">{{competitor2}}(红方)</div>
+            <div class="competitor1" v-if="">{{room.otherSide.userName}} <i v-show="room.turnSide=='otherSide'"  class="el-icon-circle-check"></i></div>
+            <div class="competitor2">{{room.ownSide.userName}} <i v-show="room.turnSide=='ownSide'" class="el-icon-circle-check"></i></div>
             <div class="chess" ref="chess">
                 <div id="chessWrap" ref="chessWrap"><canvas id="canvas" ref="canvas">不支持Canvas</canvas></div>
             </div>
         </div>
+        <!-- 加入房间的提示口 -->
+        <!--:before-close="handleClose"-->
     </div>
 </template>
 
@@ -19,14 +22,72 @@
     data () {
       return {
         competitor1: 'nzq',
-        competitor2: 'wx'
+        competitor2: 'wx',
+        joinRoomTipVisible: true,
+        isOtherJoin: "",//另一方加入
+        room: {
+          name: "",
+          turnSide: "ownSide", // 该走棋的一方
+          ownSide: {
+            userName: "",
+            belong: "",
+          },
+          otherSide: {
+            userName: "",
+            belong: ""
+          }
+        }
+      }
+    },
+    methods: {
+      // 触发用户加入事件
+      userJoin(room) {
+        this.$socket.joinRoom(room)
+      },
+      // 监听用户加入
+      listenJoinRoom() {
+        this.$socket.listenJoinRoom((userName) => {
+          console.log(userName);
+          this.$notify({
+            title: '用户加入提示',
+            message: this.$createElement('i', { style: 'color: teal'}, `${userName !== this.room.ownSide.userName ? userName : "你"}已加入房间`)
+          });
+        })
+
+      },
+      // 监听分配两个用户“属于方”分配
+      listenMakeBelong() {
+        let room = this.room;
+        this.$socket.listenMakeBelong((obj) => {
+          room.ownSide.belong = obj[room.ownSide.userName];
+          room.otherSide.belong = obj[room.otherSide.userName];
+          room.turnSide = room.ownSide.belong === "red" ? "ownSide" : "otherSide"
+          this.$notify({
+            title: '用户加入提示',
+            message: this.$createElement('i', { style: 'color: teal'}, `系统随机分配${room.ownSide.userName}为${room.ownSide.belong == "red" ? "红色" : "黑色"}方，${room.otherSide.userName}为${room.otherSide.belong == "red" ? "红色" : "黑色"}方`)
+          });
+        })
       }
     },
     mounted () {
+      let socket = this.$socket
+        ,room = this.room;
+      room.name = socket.inviteData.inviter + "vs" + socket.inviteData.accepter;
+      room.ownSide.userName = socket.userName;
+      if (socket.userName === socket.inviteData.inviter) {
+        room.otherSide.userName = socket.inviteData.accepter
+      }else {
+        room.otherSide.userName = socket.inviteData.inviter
+      }
+
+      document.title = `${room.name}（${room.ownSide.userName}）`; // 便于观察
+      this.listenMakeBelong();
+      this.listenJoinRoom();
+      this.userJoin(room);
       chess({
         vue: this,
-        side: "black",
-        SWidth: 70,
+        side: room.ownSide.belong,
+        SWidth: 50,
         LWidth: 4,
       });
     }
@@ -35,6 +96,7 @@
 
 <style lang="less">
     .chess-body {
+        color: white;
         width: 100%;
         height: 100%;
         overflow: hidden;

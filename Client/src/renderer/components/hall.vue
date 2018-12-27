@@ -7,13 +7,12 @@
         <div class="body">
             <div v-for="item of userArr" v-if="item[0] !== userName" class="user-item">
                 <p class="userName">{{item[0]}}</p>
-                <template v-if="item[1].canInvite === 1">
+                <template v-if="item[1]">
                     <p>等待中...&nbsp;&nbsp;&nbsp;&nbsp;可邀请</p>
                     <el-button
                             type = "primary"
                             class="can-invite"
-                            :userId=item[1].userId
-                            @click="invite(item[0])"
+                            @click="inviteUser(item[0])"
                             v-if="canClick"
                     >邀请</el-button>
                     <el-button type="primary" v-else class="ban-invite">邀请</el-button>
@@ -25,22 +24,22 @@
             </div>
         </div>
         <el-dialog
-                :visible.sync="invitedDialogVisible"
+                :visible.sync="invitedVisible"
                 width="30%"
                 center>
-            <span>{{invitedData.from}}邀请你加入游戏</span>
+            <span>{{getInviter}}邀请你加入游戏</span>
             <span slot="footer" class="dialog-footer">
-                <el-button type="primary" @click="centerDialogVisible = false">加入</el-button>
-                <el-button type="primary" @click="centerDialogVisible = false">拒绝</el-button>
+                <el-button type="primary" @click="backInvite(true)">加入</el-button>
+                <el-button type="primary" @click="backInvite(false)">拒绝</el-button>
             </span>
         </el-dialog>
         <el-dialog
-                :visible.sync="centerDialogVisible"
+                :visible.sync="inviteSucVisible"
                 width="30%"
                 center>
-            <span>{{invitedSureContent}}</span>
+            <span>{{inviteSucContent}}</span>
             <span slot="footer" class="dialog-footer">
-                <el-button type="primary" @click="centerDialogVisible = false">确 定</el-button>
+                <el-button type="primary" @click="comeInChess">确 定</el-button>
             </span>
         </el-dialog>
     </div>
@@ -54,59 +53,91 @@
       return {
         userName: "",
         userArr: [],
-        inviteData: null, // 邀请他人的传输对象{from, to}
-        invitedData: null, // 被邀请时的接受对象{from, to, bool}
-        transData: null, // 开启棋局传入的对象 move: {x: 0, y: 0,},form: "", to: "",}
+        transData: null, // 开启棋局传入的对象 move: {x: 0, y: 0,},inviter: "", accepter: "",}
         canClick: true, // 点击邀请后不允许在点击
-        centerDialogVisible: false,
-        invitedSureContent: "",
-        invitedDialogVisible: false,
+        inviteSucVisible: false, // 邀请成功
+        inviteSucContent: "",
+        invitedVisible: false, // 被邀请
+      }
+    },
+    computed: {
+      getInviter() {
+        return this.$socket.inviteData && this.$socket.inviteData.inviter
       }
     },
     methods: {
-      // 邀请他人 - form方
-      invite(to) {
-        console.log(this.userName +" invite " + to);
-        this.inviteData = {
-          from: this.userName,
-          to: to
+      storageSocket() {
+       // sessionStorage.scoket = JSON.stringify(this.$socket);
+      },
+      // 邀请他人 - inviter方
+      inviteUser(accepter) {
+        let inviteData = {
+          inviter: this.userName,
+          accepter: accepter
         }
         this.canClick = false;
         // 邀请
-        this.$socket.inviteUser(this.inviteData)
+        this.$socket.inviteUser(inviteData);
+      },
 
-      },
       // 监听对方对请求的应答
-      getInvited() {
+      listenInviteRel() {
         // 获取邀请结果
-        this.$socket.getInvite(this.userName, (bool) => {
+        this.$socket.listenInviteRel((inviteData) => {
+          let sInviteData = this.$socket.inviteData;
           this.canClick = true;
-          this.centerDialogVisible = true;
-          if (bool) { // 邀请成功
-            // 对方已经拒绝邀请，点击退出
-            this.invitedSureContent = "对方已经接受邀请，点击进入"
-          }else {
-            // 对方已经接受邀请，点击进入
-            this.invitedSureContent = "对方已经拒绝邀请，点击退出"
+          this.inviteSucVisible = true;
+
+          if (inviteData.isAccept) {// 对方已经接受邀请，点击进入
+            this.inviteSucContent = "对方加入房间，点击进入";
+            this.$socket.inviteData = inviteData;
+          }else {// 对方已经拒绝邀请，点击退出
+            sInviteData = null;
+            this.inviteSucContent = "对方已经拒绝邀请，点击退出"
           }
         })
       },
-      // 被邀请 - to方
-      invited() {
-        // 监听是否被邀请
-        this.$socket.invited(this.userName, (invitedData) => {
-          let inviData = this.invitedData;
-          inviData = invitedData;
-          if (confirm('是否接受邀请？')) {
-            console.log("confirm")
-            inviData.bool = true
-          }else {
-            inviData.bool = false
-          }
-          // 返回应答结果
-          this.$socket.backInvite(inviData)
+
+      // 监听是否被邀请 - accepter方
+      listenInvite() {
+        this.$socket.listenInvite((inviteData) => {
+          this.invitedVisible = true;
+          this.$socket.inviteData = inviteData;
         })
-      }
+      },
+
+      // 返回是否接受邀请
+      backInvite(isAccpet) {
+        let socket = this.$socket
+          ,inviteData = socket.inviteData;
+
+        // 先已经接受了邀请
+        if (inviteData) {
+          this.invitedVisible = false;
+          inviteData.isAccept = isAccpet;
+          // 返回应答结果
+          socket.backInvite(inviteData);
+          inviteData.isComeIn = true;
+          // 拒绝了将被邀请的数据更新
+          if (!isAccpet) {
+            inviteData = null;
+          }else {
+            this.storageSocket()
+            this.$router.push("/chess");
+          }
+        }
+      },
+
+      // 进入棋局
+      comeInChess() {
+        let inviteData = this.$socket.inviteData;
+        this.inviteSucVisible = false;
+        if (inviteData && inviteData.isAccept) {
+          inviteData.isComeIn = true;
+          this.storageSocket();
+          this.$router.push("/chess");
+        }
+      },
     },
     mounted () {
       let socket = this.$socket;
@@ -120,9 +151,10 @@
       this.userName = socket.userName;
 
       // 便于观察
-      document.title = this.userName;
+      document.title = "welcome " + this.userName + "！";
       // 获取所有用户
       socket.getUserArr().then((userArr) => {
+        console.log(userArr)
         this.userArr = userArr
       })
 
@@ -132,9 +164,10 @@
       })
 
       // 监听是否被邀请
-      this.invited();
+      this.listenInvite();
+
       //监听应答
-      this.getInvited();
+      this.listenInviteRel();
     },
   }
 </script>
