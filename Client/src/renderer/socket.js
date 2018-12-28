@@ -5,6 +5,7 @@ const socketIo = io.connect("http://localhost:3000");
 const socket = {
   userName: "",
   inviteData: null, // 邀请他人的传输对象{inviter, to}
+  socketIo: socketIo,
 
   // 触发用户加入事件
   userJoin() {
@@ -31,18 +32,20 @@ const socket = {
     })
   },
 
-  // 监听服务器端用户Map改变事件
-  listenUserArrChange(cb) {
-    socketIo.on("userListChange", (userArr) => {
-      console.log(userArr);
-      cb(userArr)
-    })
-  },
-
   // 触发邀请某人游戏的事件
   inviteUser(inviteData) {
     console.log("触发邀请某人游戏的事件")
     socketIo.emit("inviteUser", inviteData)
+  },
+
+  // 发出取消
+  cancelInvite(inviteData) {
+    socketIo.emit("cancelInvite", inviteData)
+  },
+
+  // 监听取消
+  listenCancelInvite(cb){
+    socketIo.on("cancelInvite", cb)
   },
 
   // 监听是否被某人邀请的事件

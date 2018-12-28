@@ -1,8 +1,7 @@
 <template>
     <div class="chess-body">
-        <h1>{{room.name}}</h1>
         <div class="main">
-            <div class="competitor1" v-if="">{{room.otherSide.userName}} <i v-show="room.turnSide=='otherSide'"  class="el-icon-circle-check"></i></div>
+            <div class="competitor1">{{room.otherSide.userName}} <i v-show="room.turnSide=='otherSide'"  class="el-icon-circle-check"></i></div>
             <div class="competitor2">{{room.ownSide.userName}} <i v-show="room.turnSide=='ownSide'" class="el-icon-circle-check"></i></div>
             <div class="chess" ref="chess">
                 <div id="chessWrap" ref="chessWrap"><canvas id="canvas" ref="canvas">不支持Canvas</canvas></div>
@@ -15,6 +14,7 @@
 
 <script>
     import chess from '../assets/js/chess'
+    import { socket } from '../socket'
 
     export default {
     name: 'try1',
@@ -57,15 +57,19 @@
       },
       // 监听分配两个用户“属于方”分配
       listenMakeBelong() {
-        let room = this.room;
-        this.$socket.listenMakeBelong((obj) => {
-          room.ownSide.belong = obj[room.ownSide.userName];
-          room.otherSide.belong = obj[room.otherSide.userName];
-          room.turnSide = room.ownSide.belong === "red" ? "ownSide" : "otherSide"
-          this.$notify({
-            title: '用户加入提示',
-            message: this.$createElement('i', { style: 'color: teal'}, `系统随机分配${room.ownSide.userName}为${room.ownSide.belong == "red" ? "红色" : "黑色"}方，${room.otherSide.userName}为${room.otherSide.belong == "red" ? "红色" : "黑色"}方`)
-          });
+        return new Promise((resolve, reject) => {
+          let room = this.room;
+          this.$socket.listenMakeBelong((obj) => {
+            room.ownSide.belong = obj[room.ownSide.userName];
+            room.otherSide.belong = obj[room.otherSide.userName];
+            room.turnSide = room.ownSide.belong === "red" ? "ownSide" : "otherSide";
+            console.log(room)
+            this.$notify({
+              title: '用户加入提示',
+              message: this.$createElement('i', { style: 'color: teal'}, `系统随机分配${room.ownSide.userName}（你）为${room.ownSide.belong == "red" ? "红色" : "黑色"}方，${room.otherSide.userName}为${room.otherSide.belong == "red" ? "红色" : "黑色"}方，红色方先走棋子`)
+            });
+            resolve(room.ownSide.belong)
+          })
         })
       }
     },
@@ -81,15 +85,13 @@
       }
 
       document.title = `${room.name}（${room.ownSide.userName}）`; // 便于观察
-      this.listenMakeBelong();
-      this.listenJoinRoom();
       this.userJoin(room);
+      this.listenJoinRoom();
       chess({
         vue: this,
-        side: room.ownSide.belong,
         SWidth: 50,
         LWidth: 4,
-      });
+      })
     }
   }
 </script>
@@ -104,13 +106,12 @@
         .main {
             margin: 50px auto;
             position: relative;
-            width: 1100px;
+            width: fit-content;
+            padding: 0 120px;
 
             // 竞争者开始
             .competitor1
             ,.competitor2{
-                box-sizing: border-box;
-                width: 200px;
                 position: absolute;
                 font: 30px "华文新魏";
             }

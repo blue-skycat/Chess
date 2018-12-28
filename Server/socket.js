@@ -38,6 +38,11 @@ function socket (server) {
       console.log("disconnect");
     })
 
+    socket.on("cancelInvite", (inviteData) => {
+      console.log(inviteData.accepter + "cancel")
+      userList[inviteData.accepter].socket.emit("cancelInvite");
+    })
+
     // 监听邀请用户游戏
     socket.on("inviteUser", (inviteData) => {
       console.log("invite")
@@ -53,6 +58,7 @@ function socket (server) {
 
     // 监听用户加入
     socket.on("joinRoom", (obj) => {
+      console.log("joinRoom")
       let name1 = obj.ownSide.userName
         ,name2 = obj.otherSide.userName
         ,roomName = obj.name
@@ -80,6 +86,7 @@ function socket (server) {
 
       if (roomList[roomName] === 2){
         delete roomList[roomName];
+        console.log(sideData);
         userList[name1].socket.emit("makeBelong", sideData)
         userList[name2].socket.emit("makeBelong",sideData)
       }

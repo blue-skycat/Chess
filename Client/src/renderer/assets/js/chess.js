@@ -13,8 +13,8 @@
 function chess ({
                   vue,
                   elem = vue.$refs.canvas,
-                  side,
                   SWidth=70,
+                  side="",
                   LWidth=4,
                   width = SWidth*8,
                   height = SWidth*9,
@@ -199,11 +199,9 @@ function chess ({
       refs.chess.onclick = (event) => {
         let tag = event.target
           ,tagName = tag.tagName.toUpperCase();
-
         if (tagName === 'DIV' && tag.classList.contains("piece")) { // 点击棋子时，选中当前棋子（事件委托）
-          console.log(event)
         } else {
-          console.log(event)
+          console.log(event.offsetX, event.offsetY);
         }
       }
 
@@ -491,7 +489,7 @@ function chess ({
           })
         )
       }
-      // 黑方
+      // 红色方
       for (let index in red) {
         createPiece(
           new pieceInst[index.substr(1,index.length-2)]({
@@ -503,7 +501,7 @@ function chess ({
 
       elem.parentNode.appendChild(frag);
     }
-      ,black = {
+    let black = {
       bChe1   : {x: 0, y: 0},
       bMa1    : {x: 1, y: 0},
       bXiang1 : {x: 2, y: 0},
@@ -545,8 +543,11 @@ function chess ({
   }
 
   chessboard.init();
-  chessboard.clickHandle();
-  initAllPiece();
+  vue.listenMakeBelong().then((ownSide) => {
+    side = ownSide;
+    chessboard.clickHandle();
+    initAllPiece();
+  })
 }
 
 export default chess

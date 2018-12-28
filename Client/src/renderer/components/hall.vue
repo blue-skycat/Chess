@@ -5,23 +5,30 @@
             <p>你好！{{userName}}</p>
         </div>
         <div class="body">
-            <div v-for="item of userArr" v-if="item[0] !== userName" class="user-item">
-                <p class="userName">{{item[0]}}</p>
-                <template v-if="item[1]">
-                    <p>等待中...&nbsp;&nbsp;&nbsp;&nbsp;可邀请</p>
-                    <el-button
-                            type = "primary"
-                            class="can-invite"
-                            @click="inviteUser(item[0])"
-                            v-if="canClick"
-                    >邀请</el-button>
-                    <el-button type="primary" v-else class="ban-invite">邀请</el-button>
-                </template>
-                <template v-else>
-                    <p>游戏中...&nbsp;&nbsp;&nbsp;&nbsp;不可邀请</p>
-                    <el-button type="primary" class="ban-invite">不可邀请</el-button>
-                </template>
-            </div>
+            <template v-if="userArr.length>1">
+                <div v-for="item of userArr" v-if="item[0] !== userName" class="user-item">
+                    <p class="userName">{{item[0]}}</p>
+                    <template v-if="item[1]">
+                        <p>等待中...&nbsp;&nbsp;&nbsp;&nbsp;可邀请</p>
+                        <el-button
+                                type = "primary"
+                                class="can-invite"
+                                @click="inviteUser(item[0])"
+                        >邀请</el-button>
+                    </template>
+                    <template v-else>
+                        <p>游戏中...&nbsp;&nbsp;&nbsp;&nbsp;不可邀请</p>
+                        <el-button type="primary" class="ban-invite">不可邀请</el-button>
+                    </template>
+                </div>
+            </template>
+            <template v-else>
+                <el-alert
+                        title="当前大厅无其他玩家"
+                        type="info"
+                        show-icon>
+                </el-alert>
+            </template>
         </div>
         <el-dialog
                 :visible.sync="invitedVisible"
@@ -42,6 +49,17 @@
                 <el-button type="primary" @click="comeInChess">确 定</el-button>
             </span>
         </el-dialog>
+        <el-dialog
+                title= "邀请等待"
+                :visible.sync="inviteWaitVisible"
+                width="30%"
+                center>
+            <span>正在等待对方的应答 <i class="el-icon-loading"></i></span>
+            <span slot="footer" class="dialog-footer">
+                <el-button type="primary" @click="cancelInvite">取消邀请</el-button>
+            </span>
+        </el-dialog>
+        <!--v-if="inviteWaitVisible"-->
     </div>
 </template>
 
@@ -54,7 +72,7 @@
         userName: "",
         userArr: [],
         transData: null, // 开启棋局传入的对象 move: {x: 0, y: 0,},inviter: "", accepter: "",}
-        canClick: true, // 点击邀请后不允许在点击
+        inviteWaitVisible: false, // 点击邀请后不允许在点击
         inviteSucVisible: false, // 邀请成功
         inviteSucContent: "",
         invitedVisible: false, // 被邀请
@@ -66,6 +84,21 @@
       }
     },
     methods: {
+      // 监听邀请取消
+      listenCancelInvite() {
+        this.$socket.listenCancelInvite(() => {
+          this.invitedVisible = false;
+        })
+      },
+      // 取消邀请
+      cancelInvite() {
+        let inviteData = this.$socket.inviteData;
+        if (inviteData) {
+          this.inviteWaitVisible = false
+          this.$socket.cancelInvite(inviteData)
+        }
+      },
+
       storageSocket() {
        // sessionStorage.scoket = JSON.stringify(this.$socket);
       },
@@ -75,7 +108,8 @@
           inviter: this.userName,
           accepter: accepter
         }
-        this.canClick = false;
+        this.inviteWaitVisible = true;
+        this.$socket.inviteData = inviteData;
         // 邀请
         this.$socket.inviteUser(inviteData);
       },
@@ -84,15 +118,14 @@
       listenInviteRel() {
         // 获取邀请结果
         this.$socket.listenInviteRel((inviteData) => {
-          let sInviteData = this.$socket.inviteData;
-          this.canClick = true;
+          this.inviteWaitVisible = false;
           this.inviteSucVisible = true;
 
           if (inviteData.isAccept) {// 对方已经接受邀请，点击进入
             this.inviteSucContent = "对方加入房间，点击进入";
             this.$socket.inviteData = inviteData;
           }else {// 对方已经拒绝邀请，点击退出
-            sInviteData = null;
+            this.$socket.inviteData = null;
             this.inviteSucContent = "对方已经拒绝邀请，点击退出"
           }
         })
@@ -132,11 +165,20 @@
       comeInChess() {
         let inviteData = this.$socket.inviteData;
         this.inviteSucVisible = false;
+        console.log(inviteData)
         if (inviteData && inviteData.isAccept) {
           inviteData.isComeIn = true;
           this.storageSocket();
           this.$router.push("/chess");
         }
+      },
+
+      // 监听服务器端用户Map改变事件
+      listenUserArrChange(cb) {
+        socketIo.on("userListChange", (userArr) => {
+          console.log(userArr);
+          cb(userArr)
+        })
       },
     },
     mounted () {
@@ -154,7 +196,6 @@
       document.title = "welcome " + this.userName + "！";
       // 获取所有用户
       socket.getUserArr().then((userArr) => {
-        console.log(userArr)
         this.userArr = userArr
       })
 
@@ -163,11 +204,15 @@
         this.userArr = userArr;
       })
 
+
       // 监听是否被邀请
       this.listenInvite();
 
       //监听应答
       this.listenInviteRel();
+
+      // 监听是否被取消
+      this.listenCancelInvite();
     },
   }
 </script>
