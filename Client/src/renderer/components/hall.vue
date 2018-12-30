@@ -85,11 +85,13 @@
     },
     methods: {
       // 监听邀请取消
-      listenCancelInvite() {
-        this.$socket.listenCancelInvite(() => {
+      listenCancelInvite()  {
+        this.$socket.socketIo.on("cancelInvite", () => {
+          console.log("接受到邀请")
           this.invitedVisible = false;
         })
       },
+
       // 取消邀请
       cancelInvite() {
         let inviteData = this.$socket.inviteData;
@@ -99,9 +101,11 @@
         }
       },
 
+      // 存储 this.$socket
       storageSocket() {
        // sessionStorage.scoket = JSON.stringify(this.$socket);
       },
+
       // 邀请他人 - inviter方
       inviteUser(accepter) {
         let inviteData = {
@@ -114,10 +118,13 @@
         this.$socket.inviteUser(inviteData);
       },
 
-      // 监听对方对请求的应答
+      // 监听获取邀请结果事件
       listenInviteRel() {
-        // 获取邀请结果
-        this.$socket.listenInviteRel((inviteData) => {
+        //////////////////////////////////////////////////////////// 这个回调函数被多次执行
+        //////////////////////////////////////////////////////////// 这个回调函数被多次执行
+        //////////////////////////////////////////////////////////// 这个回调函数被多次执行
+        this.$socket.socketIo.on("listenInviteRel", (inviteData) => {
+          console.log("接受到邀请者应答")
           this.inviteWaitVisible = false;
           this.inviteSucVisible = true;
 
@@ -133,7 +140,8 @@
 
       // 监听是否被邀请 - accepter方
       listenInvite() {
-        this.$socket.listenInvite((inviteData) => {
+        this.$socket.socketIo.on("listenInvite", (inviteData) => {
+          console.log("接受到有人邀请")
           this.invitedVisible = true;
           this.$socket.inviteData = inviteData;
         })
@@ -161,24 +169,23 @@
         }
       },
 
+      // 监听服务器端用户列表改变事件
+      listenUserArrChange() {
+        this.$socket.socketIo.on("userListChange", (userArr) => {
+          console.log("接受到用户组改变应答")
+          this.userArr = userArr;
+        })
+      },
+
       // 进入棋局
       comeInChess() {
         let inviteData = this.$socket.inviteData;
         this.inviteSucVisible = false;
-        console.log(inviteData)
         if (inviteData && inviteData.isAccept) {
           inviteData.isComeIn = true;
           this.storageSocket();
           this.$router.push("/chess");
         }
-      },
-
-      // 监听服务器端用户Map改变事件
-      listenUserArrChange(cb) {
-        socketIo.on("userListChange", (userArr) => {
-          console.log(userArr);
-          cb(userArr)
-        })
       },
     },
     mounted () {
@@ -200,9 +207,7 @@
       })
 
       // 监听服务端用户列表是否改变
-      socket.listenUserArrChange((userArr) => {
-        this.userArr = userArr;
-      })
+      this.listenUserArrChange()
 
 
       // 监听是否被邀请

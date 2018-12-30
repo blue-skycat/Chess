@@ -92,6 +92,19 @@ function socket (server) {
       }
     })
 
+    // 监听用户是否走棋
+    socket.on("goChess", (goChessData) => {
+      // 下棋双方的棋子在对方的棋盘上和在自己的棋盘上的位置不一样，是相互对称的（为了用户看，不管是那一方的用户的棋子初始化都在下半棋盘）
+      goChessData.po = {x: 8 - goChessData.po.x, y: 9 - goChessData.po.y}
+      goChessData.nextPo = {x: 8 - goChessData.nextPo.x, y: 9 - goChessData.nextPo.y}
+      userList[goChessData.to].socket.emit("goChess", goChessData);
+    })
+
+    // 退出游戏
+    socket.on("outGame", (userName) => {
+      userList[userName].socket.emit("outGame");
+    })
+
     // 触发用户Map改变事件
     function userListChange() {
       // 广播
