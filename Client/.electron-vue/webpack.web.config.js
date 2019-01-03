@@ -18,7 +18,7 @@ let webConfig = {
   },
   module: {
     rules: [
-      {
+   /*   {
         test: /\.(js|vue)$/,
         enforce: 'pre',
         exclude: /node_modules/,
@@ -28,7 +28,7 @@ let webConfig = {
             formatter: require('eslint-friendly-formatter')
           }
         }
-      },
+      },*/
       {
         test: /\.less$/,
         use: ['vue-style-loader', 'css-loader', 'less-loader']
@@ -66,7 +66,7 @@ let webConfig = {
         use: {
           loader: 'url-loader',
           query: {
-            limit: 10000,
+            limit: 1000,
             name: 'imgs/[name].[ext]'
           }
         }

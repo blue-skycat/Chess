@@ -1,0 +1,26 @@
+Socket.io 与 WebSocket.io   ---   https://blog.csdn.net/sorrowkaka/article/details/82836513
+
+socket.io为什么客户端接收不到新加入用户的消息？ --- https://segmentfault.com/q/1010000011144378
+    要广播的话服务端要用io.emit(),
+    在服务端，socket代表服务端跟某一个客户端的连接，socket.emit只是服务端向某一个客户端发送信息
+    ps： 感觉你要实现的功能，跟我前几周做过的一个小项目类似，可以参考一下，我在技术圈发
+
+hall.vue 里面最开始给@click 的函数中加入了  对邀请对象的应答监听，造成了函数回调函数，单击一下，增加一个
+
+
+
+socket.on("userJoin", (userName, fn) => {
+  if (!userMap.has(userName)) {
+    userMap.set(userName, {
+      canInvite: 1, // 自定义1-可邀请加入游戏、0-不可邀请加入游戏
+      socket: socket
+    });
+    console.log(userMap)
+  //  userMapChange()
+    fn(true);
+  } else {
+    fn(false);
+  }
+})
+
+    // 造成溢出
